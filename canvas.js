@@ -25,12 +25,15 @@ for (let i = 0; i < 10; i++) {
 // initialize the board
 var board = [];
 var flagCellTable = [];
+var isRevealed = [];
 for (let i = 0; i < 10; i++) {
   board[i] = [];
   flagCellTable[i] = [];
+  isRevealed[i] = [];
   for (let j = 0; j < 10; j++) {
     board[i][j] = 0;
     flagCellTable[i][j] = false;
+    isRevealed[i][j] = false;
   }
 }
 
@@ -63,6 +66,7 @@ for (let i = 0; i < 10; i++) {
 console.log(board);
 
 function drawCell(i, j) {
+  if (isRevealed[i][j]) { return; }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.translate(i * sisiKotak + (sisiKotak/2), j * sisiKotak + (sisiKotak/2));
 
@@ -71,10 +75,12 @@ function drawCell(i, j) {
     ctx.beginPath();
     ctx.arc(0, 0, 20, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.fillStyle = 'black';
   } else {
     ctx.fillStyle = 'black';
     ctx.font = '25px Fira Code';
     ctx.fillText(board[i][j], -7, 7);
+    ctx.fillStyle = 'black';
   }
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -87,26 +93,30 @@ function revealAll() {
     }
   }
 
+  let output = document.createElement('h2');
+  output.setAttribute('class', 'box');
+  output.textContent = 'OUCH! ANDA KALAH!';
+  
+  var body = document.body;
+  body.appendChild(output);
+
   gameOver = true;
 }
 
 function revealCell(posX, posY) {
-
-  // if (flagCellTable[posX][posY]) {
-  //   return;
-  // }
+  if (flagCellTable[posX][posY]) {
+    return;
+  }
 
   if (board[posX][posY] === Infinity) {
     revealAll();
   } else {
     drawCell(posX, posY);
+    isRevealed[posX][posY] = true;
   }
 }
 
 function flagCell(posX, posY) {
-  // let posX = Math.floor(e.offsetX / sisiKotak);
-  // let posY = Math.floor(e.offsetY / sisiKotak);
-
   if (flagCellTable[posX][posY]) {
     flagCellTable[posX][posY] = false;
     ctx.fillStyle = 'white';
@@ -118,12 +128,36 @@ function flagCell(posX, posY) {
   ctx.translate(posX * sisiKotak, posY * sisiKotak);
   ctx.fillRect(0, 0, sisiKotak, sisiKotak);
   ctx.strokeRect(0, 0, sisiKotak, sisiKotak);
+  ctx.fillStyle = 'black';
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-// canvas.addEventListener('click', revealCell);
-// canvas.addEventListener('dblclick', flagCell);
 var clickCount = 0;
+
+function isAllRevealed() {
+  let summ = 0;
+  
+  for (let i = 0; i < 10; i++) {
+    for (let j = 0; j < 10; j++) {
+      if (flagCellTable[i][j] && board[i][j] === Infinity) {
+        summ++;
+      }
+    }
+  }
+  
+  if (summ === 10) { return true; }
+
+  summ = 0;
+  for (let i = 0; i < 10; i++) {
+    for (let j = 0; j < 10; j++) {
+      if (isRevealed[i][j]) {
+        summ++;
+      }
+    }
+  }
+
+  if (summ === 10) { return summ === 90; }
+}
 
 canvas.addEventListener('click', (e) => {
   if (gameOver) { return; }
@@ -142,5 +176,16 @@ canvas.addEventListener('click', (e) => {
     clearTimeout(singleClickTimer);
     clickCount = 0;
     flagCell(posX, posY);
+  }
+
+  if (isAllRevealed()) {
+    let output = document.createElement('h2');
+    output.setAttribute('class', 'box');
+    output.textContent = 'SELAMAT! ANDA MENANG!';
+
+    var body = document.body;
+    body.appendChild(output);
+
+    gameOver = true;
   }
 }, false);
