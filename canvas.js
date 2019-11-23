@@ -37,9 +37,16 @@ for (let i = 0; i < 10; i++) {
   }
 }
 
-for (let i = 0; i < 10; i++) {
+let count = 0;
+
+while(count < 10) {
+
   let x = Math.floor(Math.random() * 10);
   let y = Math.floor(Math.random() * 10);
+
+  if (board[x][y] === Infinity) {
+    continue;
+  }
 
   board[x][y] = Infinity;
 
@@ -56,14 +63,16 @@ for (let i = 0; i < 10; i++) {
       if (ix === x && iy === y) {
         continue;
       }
-
-      board[ix][iy]++;
+      
+      if (board[ix][iy] !== Infinity){
+        board[ix][iy]++;
+        console.log(x, y, ix, iy, board[ix][iy]);
+      }
     }
   }
-  // break;
+  
+  count++;
 }
-
-console.log(board);
 
 function drawCell(i, j) {
   if (isRevealed[i][j]) { return; }
@@ -92,15 +101,6 @@ function revealAll() {
       drawCell(i, j);
     }
   }
-
-  let output = document.createElement('h2');
-  output.setAttribute('class', 'box');
-  output.textContent = 'OUCH! ANDA KALAH!';
-  
-  var body = document.body;
-  body.appendChild(output);
-
-  gameOver = true;
 }
 
 function revealCell(posX, posY) {
@@ -110,6 +110,15 @@ function revealCell(posX, posY) {
 
   if (board[posX][posY] === Infinity) {
     revealAll();
+    let output = document.createElement('h2');
+    output.setAttribute('class', 'box');
+    output.textContent = 'OUCH! ANDA KALAH!';
+    
+    var body = document.body;
+    body.appendChild(output);
+
+    gameOver = true;
+
   } else {
     drawCell(posX, posY);
     isRevealed[posX][posY] = true;
@@ -122,7 +131,7 @@ function flagCell(posX, posY) {
     ctx.fillStyle = 'white';
   } else {
     flagCellTable[posX][posY] = true;
-    ctx.fillStyle = '#f4f4f4';
+    ctx.fillStyle = 'yellow';
   }
 
   ctx.translate(posX * sisiKotak, posY * sisiKotak);
@@ -155,8 +164,8 @@ function isAllRevealed() {
       }
     }
   }
-
-  if (summ === 90) { return true; }
+  console.log(summ);
+  if (summ === 89) { return true; }
 }
 
 canvas.addEventListener('click', (e) => {
@@ -179,6 +188,7 @@ canvas.addEventListener('click', (e) => {
   }
 
   if (isAllRevealed()) {
+    revealAll();
     let output = document.createElement('h2');
     output.setAttribute('class', 'box');
     output.textContent = 'SELAMAT! ANDA MENANG!';
