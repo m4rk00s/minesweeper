@@ -156,7 +156,7 @@ function isAllRevealed() {
     }
   }
 
-  if (summ === 10) { return summ === 90; }
+  if (summ === 90) { return true; }
 }
 
 canvas.addEventListener('click', (e) => {
