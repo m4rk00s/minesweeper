@@ -1,201 +1,205 @@
-const difficulty = 'easy'
+/**
+ * Bikin Minesweeper
+ */
 
-var canvas = document.querySelector('canvas');
-var ctx = canvas.getContext('2d');
+const totalMines = 10;
+const sisiKotak = 50;
+const sizeGrid = 10;
+const board = new Array(totalMines);
+const canvas = document.querySelector('canvas');
+const ctx = canvas.getContext('2d');
 
-/* atur lebar tinggi canvas */
-canvas.height = 500;
-canvas.width = 500;
+let gameOver = false;
 
-var sisiKotak = 50;
-
-var gameOver = false;
-
-for (let i = 0; i < 10; i++) {
-  ctx.translate(0, i * sisiKotak);
-
-  for (let j = 0; j < 10; j++) {
-    ctx.strokeRect(0, 0, sisiKotak, sisiKotak);
-    ctx.translate(sisiKotak, 0);
-  }
-
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-}
-
-// initialize the board
-var board = [];
-var flagCellTable = [];
-var isRevealed = [];
-for (let i = 0; i < 10; i++) {
-  board[i] = [];
-  flagCellTable[i] = [];
-  isRevealed[i] = [];
-  for (let j = 0; j < 10; j++) {
-    board[i][j] = 0;
-    flagCellTable[i][j] = false;
-    isRevealed[i][j] = false;
-  }
-}
-
-let count = 0;
-
-while(count < 10) {
-
-  let x = Math.floor(Math.random() * 10);
-  let y = Math.floor(Math.random() * 10);
-
-  if (board[x][y] === Infinity) {
-    continue;
-  }
-
-  board[x][y] = Infinity;
-
-  for (let ix = x - 1; ix <= x + 1; ix++) {
-    if (ix < 0 || ix > 9) {
-      continue;
-    }
-
-    for (let iy = y - 1; iy <= y + 1; iy++) {
-      if (iy < 0 || iy > 9) {
-        continue;
-      }
-
-      if (ix === x && iy === y) {
-        continue;
-      }
-      
-      if (board[ix][iy] !== Infinity){
-        board[ix][iy]++;
-        console.log(x, y, ix, iy, board[ix][iy]);
-      }
-    }
-  }
+// inisialisasi board
+for (let i = 0; i < totalMines; i++) {
+  board[i] = new Array(totalMines);
   
-  count++;
-}
-
-function drawCell(i, j) {
-  if (isRevealed[i][j]) { return; }
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.translate(i * sisiKotak + (sisiKotak/2), j * sisiKotak + (sisiKotak/2));
-
-  if (board[i][j] === Infinity) {
-    ctx.fillStyle = 'red';
-    ctx.beginPath();
-    ctx.arc(0, 0, 20, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.fillStyle = 'black';
-  } else {
-    ctx.fillStyle = 'black';
-    ctx.font = '25px Fira Code';
-    ctx.fillText(board[i][j], -7, 7);
-    ctx.fillStyle = 'black';
+  for (let j = 0; j < totalMines; j++) {
+    board[i][j] = {
+      value: 0,
+      flag: false,
+      revealed: false
+    };
   }
-
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-function revealAll() {
-  for (let i = 0; i < 10; i++) {
-    for (let j = 0; j < 10; j++) {
-      drawCell(i, j);
+// bikin mines
+for (let i = 0; i < totalMines; i++) {
+  let x = 0;
+  let y = 0;
+
+  do {
+    x = Math.floor(Math.random() * totalMines);
+    y = Math.floor(Math.random() * totalMines);
+  } while (board[x][y].value === null);
+
+  board[x][y].value = null;
+
+  for (let ix = x-1; ix <= x+1; ix++) {
+    for (let iy = y-1; iy <= y+1; iy++) {
+      if (ix < 0 || ix >= sizeGrid ||
+          iy < 0 || iy >= sizeGrid ||
+          board[ix][iy].value === null) {
+        continue;
+      }
+
+      board[ix][iy].value++;
     }
   }
 }
 
-function revealCell(posX, posY) {
-  if (flagCellTable[posX][posY]) {
-    return;
-  }
-
-  if (board[posX][posY] === Infinity) {
-    revealAll();
-    let output = document.createElement('h2');
-    output.setAttribute('class', 'box');
-    output.textContent = 'OUCH! ANDA KALAH!';
-    
-    var body = document.body;
-    body.appendChild(output);
-
-    gameOver = true;
-
-  } else {
-    drawCell(posX, posY);
-    isRevealed[posX][posY] = true;
-  }
-}
-
-function flagCell(posX, posY) {
-  if (flagCellTable[posX][posY]) {
-    flagCellTable[posX][posY] = false;
-    ctx.fillStyle = 'white';
-  } else {
-    flagCellTable[posX][posY] = true;
-    ctx.fillStyle = 'yellow';
-  }
-
-  ctx.translate(posX * sisiKotak, posY * sisiKotak);
+// paint a cell
+function paintCell(i, j, color) {
+  ctx.translate(i*sisiKotak, j*sisiKotak);
+  ctx.fillStyle = color;
   ctx.fillRect(0, 0, sisiKotak, sisiKotak);
   ctx.strokeRect(0, 0, sisiKotak, sisiKotak);
   ctx.fillStyle = 'black';
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
-var clickCount = 0;
-
-function isAllRevealed() {
-  let summ = 0;
-  
-  for (let i = 0; i < 10; i++) {
-    for (let j = 0; j < 10; j++) {
-      if (flagCellTable[i][j] && board[i][j] === Infinity) {
-        summ++;
-      }
-    }
+// draw an empty board
+for (let i = 0; i < sizeGrid; i++) {
+  for (let j = 0; j < sizeGrid; j++) {
+    paintCell(i, j, 'white');
   }
-  
-  if (summ === 10) { return true; }
-
-  summ = 0;
-  for (let i = 0; i < 10; i++) {
-    for (let j = 0; j < 10; j++) {
-      if (isRevealed[i][j]) {
-        summ++;
-      }
-    }
-  }
-  console.log(summ);
-  if (summ === 89) { return true; }
 }
 
-canvas.addEventListener('click', (e) => {
-  if (gameOver) { return; }
+// reveal a single cell
+function revealCell(i, j) {
+  ctx.translate(i*sisiKotak + (sisiKotak/2), 
+      j*sisiKotak + (sisiKotak/2));
 
+  if (board[i][j].value === null) {
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(0, 0, 20, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = 'black';
+  } else {
+    ctx.font = '25px Fira Code';
+    ctx.fillText(board[i][j].value, -7, 7);
+  }
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+// reveal all cells
+function revealAll() {
+  for (let i = 0; i < totalMines; i++) {
+    for (let j = 0; j < totalMines; j++) {
+      if (!board[i][j].revealed) {
+        revealCell(i, j);
+      }
+    }
+  }
+}
+
+function floodFill(i, j) {
+  const posMove = [
+    [1, 0], [-1, 0], [0, 1], [0, -1],
+    [1, 1], [-1, -1]
+  ];
+
+  board[i][j].revealed = true;
+  paintCell(i, j, 'grey');
+  revealCell(i, j);
+
+  for (let move of posMove) {
+    if (i+move[0] >= 0 && i+move[0] < sizeGrid &&
+        j+move[1] >= 0 && j+move[1] < sizeGrid &&
+        !board[i+move[0]][j+move[1]].revealed &&
+        !board[i+move[0]][j+move[1]].flag) { 
+      if (board[i+move[0]][j+move[1]].value === 0) {
+        floodFill(i+move[0], j+move[1]);
+      } else {
+        board[i+move[0]][j+move[1]].revealed = true;
+        paintCell(i+move[0], j+move[1], 'grey');
+        revealCell(i+move[0], j+move[1]);
+      }
+    }
+  }
+}
+
+// peek a cell whenever users click a particular cell
+function peekCell(i, j) {
+  if (board[i][j].revealed || board[i][j].flag) {
+    return;
+  }
+
+  if (board[i][j].value === null) {
+    revealAll();
+    gameOver = true;
+    alert('YOU LOSE');
+  } else  if (board[i][j].value === 0) {
+    floodFill(i, j);
+  } else {
+    board[i][j].revealed = true;
+    paintCell(i, j, 'grey');
+    revealCell(i, j);
+  }
+}
+
+// check if the winning condition is true
+function isWinner() {
+  let total = {safeCells: 0, flaggedMines: 0}
+  for (let i = 0; i < totalMines; i++) {
+    for (let j = 0; j < totalMines; j++) {
+      total.safeCells += board[i][j].revealed;
+      total.flaggedMines += board[i][j].flag &&
+          board[i][j].value === null;
+    } 
+  }
+
+  console.log(total);
+  return (total.safeCells === sizeGrid*10 - totalMines) ||
+      (total.flaggedMines === totalMines);
+}
+
+function flagCell(i, j) {
+  if (board[i][j].revealed) {
+    return;
+  }
+
+  if (board[i][j].flag) {
+    paintCell(i, j, 'white');
+    board[i][j].flag = false;
+  } else {
+    paintCell(i, j, 'orange');
+    board[i][j].flag = true;
+  }
+}
+
+// add even listener to the canvas
+let clickCount = 0;
+let singleClickTimer = undefined;
+canvas.addEventListener('click', (e) => {
   let posX = Math.floor(e.offsetX / sisiKotak);
   let posY = Math.floor(e.offsetY / sisiKotak);
+
+  if (gameOver) { return; }
+  
   clickCount++;
+
   if (clickCount === 1) {
     singleClickTimer = setTimeout(() => {
       clickCount = 0;
-      revealCell(posX, posY);
+      peekCell(posX, posY);
+      if (isWinner()) {
+        revealAll();
+        alert('YOU WIN!');
+      }
     }, 200);
   }
-  
+
   if (clickCount === 2) {
     clearTimeout(singleClickTimer);
     clickCount = 0;
     flagCell(posX, posY);
+    if (isWinner()) {
+      revealAll();
+      alert('YOU WIN!');
+    }
   }
-
-  if (isAllRevealed()) {
-    revealAll();
-    let output = document.createElement('h2');
-    output.setAttribute('class', 'box');
-    output.textContent = 'SELAMAT! ANDA MENANG!';
-
-    var body = document.body;
-    body.appendChild(output);
-
-    gameOver = true;
-  }
-}, false);
+});
