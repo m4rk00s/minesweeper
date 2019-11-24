@@ -1,5 +1,6 @@
 /**
  * Bikin Minesweeper
+ * 2nd Version
  */
 
 const totalMines = 10;
